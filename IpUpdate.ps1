@@ -113,6 +113,7 @@ if (-Not (Test-Path $configPath)) {
 $selected = Show-InteractiveMenu
 
 $ipAddresses = @()
+$defaultIPs = "10.42.42.1/32,10.10.0.11/32,10.10.0.12/32"
 $services = @(
     "I want it all!",
     "Cloudflare",
@@ -136,7 +137,7 @@ if ($selected[0]) {
     }
 }
 
-$allowedIPs = $ipAddresses -join ', '
+$allowedIPs = $defaultIPs + "," + ($ipAddresses -join ', ')
 
 try {
     $configContent = Get-Content -Path $configPath
