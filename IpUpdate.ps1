@@ -84,6 +84,42 @@ function Get-IPListForService {
     }
 }
 
+function Get-DefaultIPsFromConfig {
+    param (
+        [string[]]$configContent
+    )
+
+    # Az Address sor keresése
+    $addressLine = $configContent | Where-Object { $_ -match "^Address\s*=" }
+    # A DNS sor keresése
+    $dnsLine = $configContent | Where-Object { $_ -match "^DNS\s*=" }
+
+    if (-not $addressLine) {
+        Write-Error "Address line not found in the configuration file."
+        return
+    }
+    if (-not $dnsLine) {
+        Write-Error "DNS line not found in the configuration file."
+        return
+    }
+
+    $ipv4Address = $addressLine -match "Address\s*=\s*(\d+\.\d+\.\d+)\.\d+\/" | Out-Null
+    if (-not $matches[1]) {
+        Write-Error "Failed to extract IPv4 address from Address line."
+        return
+    }
+    $ipv4Subnet = "$($matches[1]).1/32"
+
+    $dnsValues = $dnsLine -replace "^DNS\s*=\s*", ""
+    $dnsSubnets = ($dnsValues -split ",\s*") | ForEach-Object { "$_/32" }
+
+    if (-not $dnsValues) {
+        Write-Error "Failed to extract DNS values."
+        return
+    }
+
+    return "$ipv4Subnet, $($dnsSubnets -join ', ') "
+}
 $logo = @"
   ________   _________ ______ _      ______ _  ______  __  __ 
  |  ____\ \ / /__   __|  ____| |    |  ____| |/ / __ \|  \/  |
@@ -113,7 +149,7 @@ if (-Not (Test-Path $configPath)) {
 $selected = Show-InteractiveMenu
 
 $ipAddresses = @()
-$defaultIPs = "10.42.42.1/32,10.10.0.11/32,10.10.0.12/32"
+$defaultIPs = Get-DefaultIPsFromConfig $configContent
 $services = @(
     "I want it all!",
     "Cloudflare",
