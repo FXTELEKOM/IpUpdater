@@ -16,7 +16,7 @@ function Show-InteractiveMenu {
         Write-Host "Use arrow keys to navigate and space to select/deselect. Press Enter to confirm."
         for ($i = 0; $i -lt $services.Length; $i++) {
             $selectionMarker = if ($selected[$i]) { "[X]" } else { "[ ]" }
-    
+
             if ($i -eq $currentIndex) {
                 Write-Host ">> $selectionMarker $($services[$i])"
             } else {
@@ -89,8 +89,10 @@ function Get-DefaultIPsFromConfig {
         [string[]]$configContent
     )
 
-    $addressLine = $configContent | Where-Object { $_ -match "^Address\s*=" }
-    $dnsLine = $configContent | Where-Object { $_ -match "^DNS\s*=" }
+    $trimmedContent = $configContent | ForEach-Object { $_.Trim() }
+
+    $addressLine = $trimmedContent | Where-Object { $_ -match "^Address\s*=" }
+    $dnsLine = $trimmedContent | Where-Object { $_ -match "^DNS\s*=" }
 
     if (-not $addressLine) {
         Write-Error "Address line not found in the configuration file."
@@ -101,12 +103,12 @@ function Get-DefaultIPsFromConfig {
         return
     }
 
-    $ipv4Address = $addressLine -match "Address\s*=\s*(\d+\.\d+\.\d+)\.\d+\/" | Out-Null
-    if (-not $matches[1]) {
+    if ($addressLine -match "Address\s*=\s*([\d\.]+)\.\d+\/") {
+        $ipv4Subnet = "$($matches[1]).1/32"
+    } else {
         Write-Error "Failed to extract IPv4 address from Address line."
         return
     }
-    $ipv4Subnet = "$($matches[1]).1/32"
 
     $dnsValues = $dnsLine -replace "^DNS\s*=\s*", ""
     $dnsSubnets = ($dnsValues -split ",\s*") | ForEach-Object { "$_/32" }
@@ -114,15 +116,16 @@ function Get-DefaultIPsFromConfig {
     return "$ipv4Subnet, $($dnsSubnets -join ', ')"
 }
 
+
 $logo = @"
-  ________   _________ ______ _      ______ _  ______  __  __ 
+  ________   _________ ______ _      ______ _  ______  __  __
  |  ____\ \ / /__   __|  ____| |    |  ____| |/ / __ \|  \/  |
  | |__   \ V /   | |  | |__  | |    | |__  | ' / |  | | \  / |
  |  __|   > <    | |  |  __| | |    |  __| |  <| |  | | |\/| |
  | |     / . \   | |  | |____| |____| |____| . \ |__| | |  | |
  |_|    /_/ \_\  |_|  |______|______|______|_|\_\____/|_|  |_|
-                                                              
-                                                              
+
+
 "@
 
 Clear-Host
@@ -143,7 +146,6 @@ if (-Not (Test-Path $configPath)) {
 $selected = Show-InteractiveMenu
 
 $ipAddresses = @()
-$defaultIPs = Get-DefaultIPsFromConfig $configContent
 $services = @(
     "I want it all!",
     "Cloudflare",
@@ -167,10 +169,11 @@ if ($selected[0]) {
     }
 }
 
-$allowedIPs = $defaultIPs + "," + ($ipAddresses -join ', ')
+$configContent = Get-Content -Path $configPath
+$defaultIPs = Get-DefaultIPsFromConfig $configContent
+$allowedIPs = $defaultIPs + ", " + ($ipAddresses -join ', ')
 
 try {
-    $configContent = Get-Content -Path $configPath
     $allowedIPsFound = $false
 
     $updatedContent = $configContent | ForEach-Object {
