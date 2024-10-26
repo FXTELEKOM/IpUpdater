@@ -89,9 +89,7 @@ function Get-DefaultIPsFromConfig {
         [string[]]$configContent
     )
 
-    # Az Address sor keresése
     $addressLine = $configContent | Where-Object { $_ -match "^Address\s*=" }
-    # A DNS sor keresése
     $dnsLine = $configContent | Where-Object { $_ -match "^DNS\s*=" }
 
     if (-not $addressLine) {
@@ -113,13 +111,9 @@ function Get-DefaultIPsFromConfig {
     $dnsValues = $dnsLine -replace "^DNS\s*=\s*", ""
     $dnsSubnets = ($dnsValues -split ",\s*") | ForEach-Object { "$_/32" }
 
-    if (-not $dnsValues) {
-        Write-Error "Failed to extract DNS values."
-        return
-    }
-
-    return "$ipv4Subnet, $($dnsSubnets -join ', ') "
+    return "$ipv4Subnet, $($dnsSubnets -join ', ')"
 }
+
 $logo = @"
   ________   _________ ______ _      ______ _  ______  __  __ 
  |  ____\ \ / /__   __|  ____| |    |  ____| |/ / __ \|  \/  |
