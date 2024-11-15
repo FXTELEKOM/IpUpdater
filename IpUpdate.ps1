@@ -1,6 +1,6 @@
 function Show-InteractiveMenu {
     $services = @(
-        "I want it all!",
+        "Select all",
         "Cloudflare",
         "CS2",
         "Websupport SK",
@@ -37,7 +37,16 @@ function Show-InteractiveMenu {
                 $currentIndex = if ($currentIndex -lt $services.Length - 1) { $currentIndex + 1 } else { 0 }
             }
             32 {  # Space key
-                $selected[$currentIndex] = -not $selected[$currentIndex]
+                if ($currentIndex -eq 0) {
+                    # Ha a "Select all" opció van kiválasztva, állítsuk be az összes többi opciót is
+                    $allSelected = -not $selected[0]
+                    for ($j = 0; $j -lt $selected.Length; $j++) {
+                        $selected[$j] = $allSelected
+                    }
+                } else {
+                    # Csak az adott opció állapota változik
+                    $selected[$currentIndex] = -not $selected[$currentIndex]
+                }
             }
             13 {  # Enter key
                 return $selected
@@ -84,36 +93,24 @@ function Get-IPListForService {
     }
 }
 
-function Get-DefaultIPsFromConfig {
+function Get-DefaultIPs {
     param (
-        [string[]]$configContent
+        [string]$url = "https://fxtelekom.org/ips/intern.txt"
     )
 
-    $trimmedContent = $configContent | ForEach-Object { $_.Trim() }
-
-    $addressLine = $trimmedContent | Where-Object { $_ -match "^Address\s*=" }
-    $dnsLine = $trimmedContent | Where-Object { $_ -match "^DNS\s*=" }
-
-    if (-not $addressLine) {
-        Write-Error "Address line not found in the configuration file."
-        return
+    try {
+        $ipListContent = Invoke-WebRequest -Uri $url -UseBasicParsing
     }
-    if (-not $dnsLine) {
-        Write-Error "DNS line not found in the configuration file."
+    catch {
+        Write-Error "Failed to download the IP list from the specified URL."
         return
     }
 
-    if ($addressLine -match "Address\s*=\s*([\d\.]+)\.\d+\/") {
-        $ipv4Subnet = "$($matches[1]).1/32"
-    } else {
-        Write-Error "Failed to extract IPv4 address from Address line."
-        return
-    }
+    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
 
-    $dnsValues = $dnsLine -replace "^DNS\s*=\s*", ""
-    $dnsSubnets = ($dnsValues -split ",\s*") | ForEach-Object { "$_/32" }
+    $defaultIPs = $trimmedIPs -join ", "
 
-    return "$ipv4Subnet, $($dnsSubnets -join ', ')"
+    return $defaultIPs
 }
 
 
@@ -170,7 +167,7 @@ if ($selected[0]) {
 }
 
 $configContent = Get-Content -Path $configPath
-$defaultIPs = Get-DefaultIPsFromConfig $configContent
+$defaultIPs = Get-DefaultIPs
 $allowedIPs = $defaultIPs + ", " + ($ipAddresses -join ', ')
 
 try {
