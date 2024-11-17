@@ -115,7 +115,7 @@ function Get-DefaultIPs {
 
 function Get-DNSIPs{
     param (
-        [string]$url = "https://staging.fxtelekom.org/ips/dns.txt"
+        [string]$url = "https://fxtelekom.org/ips/dns.txt"
     )
 
     try {
