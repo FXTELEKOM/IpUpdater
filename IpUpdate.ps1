@@ -113,6 +113,26 @@ function Get-DefaultIPs {
     return $defaultIPs
 }
 
+function Get-DNSIPs{
+    param (
+        [string]$url = "https://staging.fxtelekom.org/ips/dns.txt"
+    )
+
+    try {
+        $ipListContent = Invoke-WebRequest -Uri $url -UseBasicParsing
+    }
+    catch {
+        Write-Error "Failed to download the IP list from the specified URL."
+        return
+    }
+
+    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+
+    $DNSIPs = $trimmedIPs -join ", "
+
+    return $DNSIPs
+}
+
 
 $logo = @"
   ________   _________ ______ _      ______ _  ______  __  __
@@ -168,16 +188,23 @@ if ($selected[0]) {
 
 $configContent = Get-Content -Path $configPath
 $defaultIPs = Get-DefaultIPs
+$DNSIPs = Get-DNSIPs
 $allowedIPs = $defaultIPs + ", " + ($ipAddresses -join ', ')
 
 try {
     $allowedIPsFound = $false
+    $DNSFound = $false
 
     $updatedContent = $configContent | ForEach-Object {
-        if ($_ -match "^AllowedIPs\s*=") {
+        if ($_ -match "^DNS\s*=") {
+            $DNSFound = $true
+            "DNS = $DNSIPs"
+        }
+        elseif ($_ -match "^AllowedIPs\s*=") {
             $allowedIPsFound = $true
             "AllowedIPs = $allowedIPs"
-        } else {
+        }
+        else {
             $_
         }
     }
@@ -188,7 +215,7 @@ try {
     }
 
     Set-Content -Path $configPath -Value $updatedContent
-    Write-Host "`nwg.conf updated with the following IP addresses: $allowedIPs"
+    Write-Host "`nwg.conf updated with the following IP addresses:`nDNS: $DNSIPs`nAllowedIPs: $allowedIPs"
     Write-Host "`nHave a good time with your new fast internet :)"
 } catch {
     Write-Error "Error processing the configuration file: $_"
