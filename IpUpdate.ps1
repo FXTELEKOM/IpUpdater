@@ -5,10 +5,11 @@ function Show-InteractiveMenu {
         "CS2",
         "Websupport SK",
         "Gcore",
-        "Hunt: Showdown EU"
+        "Hunt: Showdown EU",
+        "COD"
     )
 
-    $selected = @($false, $false, $false, $false, $false, $false)
+    $selected = @($false, $false, $false, $false, $false, $false, $false)
     $currentIndex = 0
 
     function Display-Menu {
@@ -76,6 +77,9 @@ function Get-IPListForService {
         }
         "Hunt: Showdown EU" {
             $url = "https://fxtelekom.org/ips/hunt.txt"
+        }
+        "COD" {
+            $url = "https://fxtelekom.org/ips/cod.txt"
         }
         default {
             Write-Error "Invalid service selection."
@@ -169,7 +173,8 @@ $services = @(
     "CS2",
     "Websupport SK",
     "Gcore",
-    "Hunt: Showdown EU"
+    "Hunt: Showdown EU",
+    "COD"
 )
 
 if ($selected[0]) {
