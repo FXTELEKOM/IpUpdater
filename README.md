@@ -50,7 +50,7 @@ iex "& { $(iwr -useb 'https://raw.githubusercontent.com/FXTELEKOM/IpUpdater/main
 ### Példa: Meghatározott szolgáltatások kiválasztása
 
 ```shell
-.\IpUpdate.ps1 -ConfigPath C:\Users\Felhasználó\wg.conf  -SelectedServices 'Hunt: showdon EU', CS2 -verbose
+.\IpUpdate.ps1 -ConfigPath C:\Users\Felhasználó\wg.conf  -SelectedServices 'Hunt: showdown EU', CS2
 ```
 
 ### Példa: Részletes naplózás bekapcsolása
