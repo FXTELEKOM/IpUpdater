@@ -20,7 +20,7 @@ A script automatikusan frissíti a WireGuard konfigurációs fájlodat a kivála
 iex "& { $(iwr -useb 'https://raw.githubusercontent.com/FXTELEKOM/IpUpdater/main/IpUpdate.ps1') }"`!
  ```
 
-3. A script kérni fogja a WireGuard konfigurációs fájl teljes elérési útját.
+3. A script kérni fogja a WireGuard konfigurációs fájl elérési útját.
 
 4. Megjelenik egy interaktív menü, ahol kiválaszthatod a kívánt szolgáltatásokat:
     - Használd a fel/le nyilakat a navigáláshoz.
@@ -44,19 +44,19 @@ iex "& { $(iwr -useb 'https://raw.githubusercontent.com/FXTELEKOM/IpUpdater/main
 ### Példa: Minden szolgáltatás kiválasztása
 
 ```shell
-.\IpUpdate.ps1 -All -ConfigPath "C:\Users\Felhasználó\wg.conf"
+.\IpUpdate.ps1 -All -ConfigPath C:\Users\Felhasználó\wg.conf
 ```
 
 ### Példa: Meghatározott szolgáltatások kiválasztása
 
 ```shell
-.\IpUpdate.ps1 -ConfigPath "C:\Users\Felhasználó\wg.conf" -SelectedServices "Cloudflare", "CS2"
+.\IpUpdate.ps1 -ConfigPath C:\Users\Felhasználó\wg.conf  -SelectedServices 'Hunt: showdon EU', CS2 -verbose
 ```
 
 ### Példa: Részletes naplózás bekapcsolása
 
 ```shell
-.\IpUpdate.ps1 -All -ConfigPath "C:\Users\Felhasználó\wg.conf" -Verbose
+.\IpUpdate.ps1 -All -ConfigPath C:\Users\Felhasználó\wg.conf -Verbose
 ```
 
 ### Teljes segítség megjelenítése

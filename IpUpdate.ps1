@@ -86,7 +86,8 @@ function Get-IPListFromURL {
         Write-Verbose "Processed IP addresses: $($ipAddresses.Count) entries found."
         return $ipAddresses
     } catch {
-        Write-Error "Failed to download IP list from: $URL"
+        $errorMessage = $_.Exception.Message
+        Write-Error ("Failed to download IP list from {0}: {1}" -f $URL, $errorMessage)
         throw $_
     }
 }
@@ -122,6 +123,146 @@ function Normalize-ServiceNames {
         }
     }
     return $normalizedNames
+}
+
+function Select-Services {
+    param (
+        [array]$AvailableServices,
+        [string[]]$SelectedServices,
+        [switch]$All
+    )
+    if ($All) {
+        Write-Host "All services selected via '-All' parameter."
+        return $AvailableServices
+    } elseif ($SelectedServices) {
+        Write-Host "Selected services provided: $SelectedServices"
+        $SelectedServiceNames = Normalize-ServiceNames -Names $SelectedServices -ValidServices $AvailableServices
+        if (-Not $SelectedServiceNames) {
+            Write-Error "No valid services were provided."
+            exit 1
+        }
+        return $SelectedServiceNames
+    } else {
+        Write-Host "No services provided. Launching interactive menu..."
+        $selection = Show-InteractiveMenu -Services $AvailableServices
+        $SelectedServiceNames = @()
+        for ($i = 1; $i -lt $selection.Length; $i++) {
+            if ($selection[$i]) {
+                $SelectedServiceNames += $AvailableServices[$i - 1]
+            }
+        }
+        if (-Not $SelectedServiceNames) {
+            Write-Error "No services were selected."
+            exit 1
+        }
+        return $SelectedServiceNames
+    }
+}
+
+function Collect-IPAddresses {
+    param (
+        [string[]]$SelectedServiceNames,
+        [hashtable]$ServiceConfig
+    )
+    $ipAddresses = @()
+    foreach ($service in $SelectedServiceNames) {
+        Write-Host "Processing service: $service"
+        try {
+            $serviceIPs = Get-IPListFromURL -URL $ServiceConfig[$service]
+            $ipAddresses += $serviceIPs
+            Write-Verbose "Total IPs collected for '$service': $($serviceIPs.Count)"
+        } catch {
+            Write-Error "An error occurred while downloading the IP list for '$service': $_"
+            exit 1
+        }
+    }
+    Write-Verbose "Total IP addresses collected from services: $($ipAddresses.Count)"
+    return $ipAddresses
+}
+
+function Get-DefaultAndDNSIPs {
+    param (
+        [string]$DefaultIPsURL,
+        [string]$DNSIPsURL
+    )
+    try {
+        Write-Host "Downloading default IPs..."
+        $defaultIPs = Get-IPListFromURL -URL $DefaultIPsURL -ErrorAction Stop
+        $defaultIPsString = $defaultIPs -join ", "
+        Write-Verbose "Default IPs downloaded: $($defaultIPs.Count)"
+
+        Write-Host "Downloading DNS IPs..."
+        $DNSIPs = Get-IPListFromURL -URL $DNSIPsURL -ErrorAction Stop
+        $DNSIPsString = $DNSIPs -join ", "
+        Write-Verbose "DNS IPs downloaded: $($DNSIPs.Count)"
+
+        return @{
+            DefaultIPs = $defaultIPs
+            DNSIPs = $DNSIPs
+            DefaultIPsString = $defaultIPsString
+            DNSIPsString = $DNSIPsString
+        }
+    } catch {
+        $errorMessage = $_.Exception.Message
+        Write-Error ("Failed to download default IPs or DNS IPs: {0}" -f $errorMessage)
+        exit 1
+    }
+}
+
+function Update-ConfigurationFile {
+    param (
+        [hashtable]$Data
+    )
+
+    # Extract data from the hashtable
+    $ConfigPath      = $Data.ConfigPath
+    $ConfigContent   = $Data.ConfigContent
+    $DefaultIPs      = $Data.DefaultIPs
+    $ServiceIPs      = $Data.ServiceIPs
+    $DNSIPsString    = $Data.DNSIPsString
+
+    $allowedIPsFound = $false
+    $DNSFound = $false
+
+    $updatedContent = $ConfigContent | ForEach-Object {
+        if ($_ -match "^\s*DNS\s*=") {
+            $DNSFound = $true
+            Write-Verbose "Existing DNS entry found. Updating DNS IPs."
+            "DNS = $DNSIPsString"
+        }
+        elseif ($_ -match "^\s*AllowedIPs\s*=") {
+            $allowedIPsFound = $true
+            Write-Verbose "Existing AllowedIPs entry found. Updating Allowed IPs."
+            $allAllowedIPs = $DefaultIPs + $ServiceIPs
+            $allAllowedIPsString = $allAllowedIPs -join ", "
+            "AllowedIPs = $allAllowedIPsString"
+        }
+        else {
+            $_
+        }
+    }
+
+    # Fail if 'AllowedIPs' entry is not found
+    if (-Not $allowedIPsFound) {
+        Write-Error "No 'AllowedIPs' entry found in the configuration file. Please ensure your configuration file contains the necessary 'AllowedIPs' field."
+        exit 1
+    }
+
+    # Fail if 'DNS' entry is not found
+    if (-Not $DNSFound) {
+        Write-Error "No 'DNS' entry found in the configuration file. Please ensure your configuration file contains the necessary 'DNS' field."
+        exit 1
+    }
+
+    # Save the updated configuration file
+    Write-Host "Updating configuration file..."
+    Set-Content -Path $ConfigPath -Value $updatedContent -ErrorAction Stop
+    Write-Verbose "Configuration file updated successfully."
+
+    Write-Host "`nThe WireGuard configuration file has been updated."
+    Write-Host "DNS: $DNSIPsString"
+    Write-Host "AllowedIPs: $allAllowedIPsString"
+    Write-Host "`nEnjoy your faster internet! :)"
 }
 
 #endregion
@@ -165,118 +306,33 @@ Write-Verbose "Configuration file path: $ConfigPath"
 $AvailableServices = $ServiceConfig.Keys
 
 # Service selection
-if ($All) {
-    Write-Host "All services selected via '-All' parameter."
-    $SelectedServiceNames = $AvailableServices
-} elseif ($SelectedServices) {
-    Write-Host "Selected services provided: $SelectedServices"
-    $SelectedServiceNames = Normalize-ServiceNames -Names $SelectedServices -ValidServices $AvailableServices
-    if (-Not $SelectedServiceNames) {
-        Write-Error "No valid services were provided."
-        exit 1
-    }
-} else {
-    Write-Host "No services provided. Launching interactive menu..."
-    $selection = Show-InteractiveMenu -Services $AvailableServices
-    $SelectedServiceNames = @()
-    for ($i = 1; $i -lt $selection.Length; $i++) {
-        if ($selection[$i]) {
-            $SelectedServiceNames += $AvailableServices[$i - 1]
-        }
-    }
-    if (-Not $SelectedServiceNames) {
-        Write-Error "No services were selected."
-        exit 1
-    }
-}
+$SelectedServiceNames = Select-Services -AvailableServices $AvailableServices -SelectedServices $SelectedServices -All:$All
 
 Write-Verbose "Services selected: $SelectedServiceNames"
 
 # Collect IP addresses
-$ipAddresses = @()
-foreach ($service in $SelectedServiceNames) {
-    Write-Host "Processing service: $service"
-    try {
-        $serviceIPs = Get-IPListFromURL -URL $ServiceConfig[$service]
-        $ipAddresses += $serviceIPs
-        Write-Verbose "Total IPs collected for '$service': $($serviceIPs.Count)"
-    } catch {
-        Write-Error "An error occurred while downloading the IP list for '$service': $_"
-        exit 1
-    }
-}
-
-Write-Verbose "Total IP addresses collected from services: $($ipAddresses.Count)"
+$ipAddresses = Collect-IPAddresses -SelectedServiceNames $SelectedServiceNames -ServiceConfig $ServiceConfig
 
 # Download default IPs and DNS IPs
-try {
-    Write-Host "Downloading default IPs..."
-    $defaultIPs = Get-IPListFromURL -URL $DefaultIPsURL -ErrorAction Stop
-    $defaultIPsString = $defaultIPs -join ", "
-    Write-Verbose "Default IPs downloaded: $($defaultIPs.Count)"
+$IPsData = Get-DefaultAndDNSIPs -DefaultIPsURL $DefaultIPsURL -DNSIPsURL $DNSIPsURL
+$defaultIPs = $IPsData.DefaultIPs
+$DNSIPs = $IPsData.DNSIPs
+$defaultIPsString = $IPsData.DefaultIPsString
+$DNSIPsString = $IPsData.DNSIPsString
 
-    Write-Host "Downloading DNS IPs..."
-    $DNSIPs = Get-IPListFromURL -URL $DNSIPsURL -ErrorAction Stop
-    $DNSIPsString = $DNSIPs -join ", "
-    Write-Verbose "DNS IPs downloaded: $($DNSIPs.Count)"
-} catch {
-    Write-Error "Failed to download default IPs or DNS IPs: $_"
-    exit 1
+# Read configuration file content
+$configContent = Get-Content -Path $ConfigPath -ErrorAction Stop
+
+# Prepare data for updating the configuration file
+$updateData = @{
+    ConfigPath      = $ConfigPath
+    ConfigContent   = $configContent
+    DefaultIPs      = $defaultIPs
+    ServiceIPs      = $ipAddresses
+    DNSIPsString    = $DNSIPsString
 }
 
 # Update configuration file
-try {
-    Write-Host "Reading configuration file..."
-    $configContent = Get-Content -Path $ConfigPath -ErrorAction Stop
-    Write-Verbose "Configuration file read successfully."
-
-    $allowedIPsFound = $false
-    $DNSFound = $false
-
-    $updatedContent = $configContent | ForEach-Object {
-        if ($_ -match "^\s*DNS\s*=") {
-            $DNSFound = $true
-            Write-Verbose "Existing DNS entry found. Updating DNS IPs."
-            "DNS = $DNSIPsString"
-        }
-        elseif ($_ -match "^\s*AllowedIPs\s*=") {
-            $allowedIPsFound = $true
-            Write-Verbose "Existing AllowedIPs entry found. Updating Allowed IPs."
-            $allAllowedIPs = $defaultIPs + $ipAddresses
-            $allAllowedIPsString = $allAllowedIPs -join ", "
-            "AllowedIPs = $allAllowedIPsString"
-        }
-        else {
-            $_
-        }
-    }
-
-    # Add 'AllowedIPs' if not found
-    if (-Not $allowedIPsFound) {
-        Write-Verbose "No AllowedIPs entry found. Adding new entry."
-        $allAllowedIPs = $defaultIPs + $ipAddresses
-        $allAllowedIPsString = $allAllowedIPs -join ", "
-        $updatedContent += "AllowedIPs = $allAllowedIPsString"
-    }
-
-    # Add 'DNS' if not found
-    if (-Not $DNSFound) {
-        Write-Verbose "No DNS entry found. Adding new entry."
-        $updatedContent += "DNS = $DNSIPsString"
-    }
-
-    # Save the updated configuration file
-    Write-Host "Updating configuration file..."
-    Set-Content -Path $ConfigPath -Value $updatedContent -ErrorAction Stop
-    Write-Verbose "Configuration file updated successfully."
-
-    Write-Host "`nThe WireGuard configuration file has been updated."
-    Write-Host "DNS: $DNSIPsString"
-    Write-Host "AllowedIPs: $allAllowedIPsString"
-    Write-Host "`nEnjoy your faster internet! :)"
-} catch {
-    Write-Error "An error occurred while updating the configuration file: $_"
-    exit 1
-}
+Update-ConfigurationFile -Data $updateData
 
 #endregion
