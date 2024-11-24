@@ -188,19 +188,15 @@ function Get-DefaultAndDNSIPs {
     try {
         Write-Host "Downloading default IPs..."
         $defaultIPs = Get-IPListFromURL -URL $DefaultIPsURL -ErrorAction Stop
-        $defaultIPsString = $defaultIPs -join ", "
         Write-Verbose "Default IPs downloaded: $($defaultIPs.Count)"
 
         Write-Host "Downloading DNS IPs..."
         $DNSIPs = Get-IPListFromURL -URL $DNSIPsURL -ErrorAction Stop
-        $DNSIPsString = $DNSIPs -join ", "
         Write-Verbose "DNS IPs downloaded: $($DNSIPs.Count)"
 
         return @{
             DefaultIPs = $defaultIPs
             DNSIPs = $DNSIPs
-            DefaultIPsString = $defaultIPsString
-            DNSIPsString = $DNSIPsString
         }
     } catch {
         $errorMessage = $_.Exception.Message
@@ -219,7 +215,11 @@ function Update-ConfigurationFile {
     $ConfigContent   = $Data.ConfigContent
     $DefaultIPs      = $Data.DefaultIPs
     $ServiceIPs      = $Data.ServiceIPs
-    $DNSIPsString    = $Data.DNSIPsString
+    $DNSIPs          = $Data.DNSIPs
+
+    $DNSIPsString = $DNSIPs -join ", "
+    $allAllowedIPs = $DefaultIPs + $ServiceIPs
+    $allAllowedIPsString = $allAllowedIPs -join ", "
 
     $allowedIPsFound = $false
     $DNSFound = $false
@@ -233,8 +233,6 @@ function Update-ConfigurationFile {
         elseif ($_ -match "^\s*AllowedIPs\s*=") {
             $allowedIPsFound = $true
             Write-Verbose "Existing AllowedIPs entry found. Updating Allowed IPs."
-            $allAllowedIPs = $DefaultIPs + $ServiceIPs
-            $allAllowedIPsString = $allAllowedIPs -join ", "
             "AllowedIPs = $allAllowedIPsString"
         }
         else {
@@ -257,7 +255,6 @@ function Update-ConfigurationFile {
     # Save the updated configuration file
     Write-Host "Updating configuration file..."
     Set-Content -Path $ConfigPath -Value $updatedContent -ErrorAction Stop
-    Write-Verbose "Configuration file updated successfully."
 
     Write-Host "`nThe WireGuard configuration file has been updated."
     Write-Host "DNS: $DNSIPsString"
@@ -288,12 +285,8 @@ Write-Host
 # Validate the configuration file path
 try {
     if (-Not $ConfigPath) {
-        if ($PSBoundParameters.ContainsKey('ConfigPath')) {
-            throw "The specified configuration file does not exist: $ConfigPath"
-        } else {
-            Write-Host "No configuration file path provided. Prompting for input..."
-            $ConfigPath = Read-Host "Enter the full path to your WireGuard configuration file"
-        }
+        Write-Host "No configuration file path provided. Prompting for input..."
+        $ConfigPath = Read-Host "Enter the full path to your WireGuard configuration file"
     }
     Validate-ConfigPath -Path $ConfigPath
 } catch {
@@ -317,8 +310,6 @@ $ipAddresses = Collect-IPAddresses -SelectedServiceNames $SelectedServiceNames -
 $IPsData = Get-DefaultAndDNSIPs -DefaultIPsURL $DefaultIPsURL -DNSIPsURL $DNSIPsURL
 $defaultIPs = $IPsData.DefaultIPs
 $DNSIPs = $IPsData.DNSIPs
-$defaultIPsString = $IPsData.DefaultIPsString
-$DNSIPsString = $IPsData.DNSIPsString
 
 # Read configuration file content
 $configContent = Get-Content -Path $ConfigPath -ErrorAction Stop
@@ -329,7 +320,7 @@ $updateData = @{
     ConfigContent   = $configContent
     DefaultIPs      = $defaultIPs
     ServiceIPs      = $ipAddresses
-    DNSIPsString    = $DNSIPsString
+    DNSIPs          = $DNSIPs
 }
 
 # Update configuration file
