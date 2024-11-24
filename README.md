@@ -32,7 +32,8 @@ iex "& { $(iwr -useb 'https://raw.githubusercontent.com/FXTELEKOM/IpUpdater/main
 
 ## Script futtatása parancssori paraméterekkel
 
-> Ha pontosan tudod, mit szeretnél, használhatod a scriptet nem interaktív módban is, ha megadod a szükséges paramétereket:
+> Ha pontosan tudod, mit szeretnél, használhatod a scriptet nem interaktív módban is, ha megadod a szükséges
+> paramétereket:
 
 - `-ConfigPath`: A WireGuard konfigurációs fájl teljes elérési útja.
 - `-SelectedServices`: A kiválasztott szolgáltatások listája.
@@ -41,19 +42,31 @@ iex "& { $(iwr -useb 'https://raw.githubusercontent.com/FXTELEKOM/IpUpdater/main
 
 # Példák
 
-### Példa: Minden szolgáltatás kiválasztása
+### Minden szolgáltatás kiválasztása
 
 ```shell
 .\IpUpdate.ps1 -All -ConfigPath C:\Users\Felhasználó\wg.conf
 ```
 
-### Példa: Meghatározott szolgáltatások kiválasztása
+### Meghatározott szolgáltatások kiválasztása
 
 ```shell
 .\IpUpdate.ps1 -ConfigPath C:\Users\Felhasználó\wg.conf  -SelectedServices 'Hunt: showdown EU', CS2
 ```
 
-### Példa: Részletes naplózás bekapcsolása
+### Interaktív mód használata, ha a `-SelectedServices` vagy `-All` nincs megadva:
+
+```shell
+.\IpUpdate.ps1 -ConfigPath C:\Users\Felhasználó\wg.conf 
+```
+
+### Interaktív mód használata, ha a `-ConfigPath` nincs megadva:
+
+```shell
+.\IpUpdate.ps1 -All
+```
+
+### Részletes naplózás bekapcsolása
 
 ```shell
 .\IpUpdate.ps1 -All -ConfigPath C:\Users\Felhasználó\wg.conf -Verbose
