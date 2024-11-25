@@ -1,3 +1,9 @@
+} catch {
+    Write-Error "Error processing the configuration file: $_"
+}
+21:16:45 - dovahkiin0424: ~/IpUpdater 
+
+21:18:09 - dovahkiin0424: ~/IpUpdater  cat IpUpdate.ps1         (U main)  in 13ms
 function Show-InteractiveMenu {
     $services = @(
         "Select all",
@@ -5,15 +11,17 @@ function Show-InteractiveMenu {
         "CS2",
         "Websupport SK",
         "Gcore",
-        "Hunt: Showdown EU"
+        "Hunt: Showdown EU",
+        "Fastly"
     )
 
-    $selected = @($false, $false, $false, $false, $false, $false)
+    $selected = @($false, $false, $false, $false, $false, $false, $false)
     $currentIndex = 0
 
     function Display-Menu {
         Clear-Host
-        Write-Host "Use arrow keys to navigate and space to select/deselect. Press Enter to confirm."
+        Write-Host "Use arrow keys to navigate and space to select/deselect. Press En
+ter to confirm."
         for ($i = 0; $i -lt $services.Length; $i++) {
             $selectionMarker = if ($selected[$i]) { "[X]" } else { "[ ]" }
 
@@ -31,14 +39,16 @@ function Show-InteractiveMenu {
 
         switch ($key.VirtualKeyCode) {
             38 {  # Up arrow key
-                $currentIndex = if ($currentIndex -gt 0) { $currentIndex - 1 } else { $services.Length - 1 }
+                $currentIndex = if ($currentIndex -gt 0) { $currentIndex - 1 } else {
+ $services.Length - 1 }
             }
             40 {  # Down arrow key
-                $currentIndex = if ($currentIndex -lt $services.Length - 1) { $currentIndex + 1 } else { 0 }
+                $currentIndex = if ($currentIndex -lt $services.Length - 1) { $curren
+tIndex + 1 } else { 0 }
             }
             32 {  # Space key
                 if ($currentIndex -eq 0) {
-                    # Ha a "Select all" opció van kiválasztva, állítsuk be az összes többi opciót is
+                    # Ha a "Select all" opció van kiválasztva, állítsuk be az összes
                     $allSelected = -not $selected[0]
                     for ($j = 0; $j -lt $selected.Length; $j++) {
                         $selected[$j] = $allSelected
@@ -77,6 +87,9 @@ function Get-IPListForService {
         "Hunt: Showdown EU" {
             $url = "https://fxtelekom.org/ips/hunt.txt"
         }
+        "Fastly" {
+            $url = "https://fxtelekom.org/ips/fastly.txt"
+        }
         default {
             Write-Error "Invalid service selection."
             exit 1
@@ -85,7 +98,7 @@ function Get-IPListForService {
 
     try {
         $ipList = Invoke-WebRequest -Uri $url -UseBasicParsing
-        $ipAddresses = $ipList.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+        $ipAddresses = $ipList.Content -split "`n" | ForEach-Object { $_.Trim() } | W
         return $ipAddresses
     } catch {
         Write-Error "Failed to download IP list for service $service : $_"
@@ -106,7 +119,7 @@ function Get-DefaultIPs {
         return
     }
 
-    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } |
 
     $defaultIPs = $trimmedIPs -join ", "
 
@@ -115,7 +128,7 @@ function Get-DefaultIPs {
 
 function Get-DNSIPs{
     param (
-        [string]$url = "https://fxtelekom.org/ips/dns.txt"
+        [string]$url = "https://staging.fxtelekom.org/ips/dns.txt"
     )
 
     try {
@@ -126,7 +139,7 @@ function Get-DNSIPs{
         return
     }
 
-    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
+    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } |
 
     $DNSIPs = $trimmedIPs -join ", "
 
@@ -148,8 +161,8 @@ $logo = @"
 Clear-Host
 Write-Host @"
 $logo
-This script will enter the IP ranges for your selected services in your wireguard config file.
-You can run it when we add a new list or update an existing one, and you want to use it for a newly added service or one of the old ranges is extended!
+This script will enter the IP ranges for your selected services in your wireguard con
+You can run it when we add a new list or update an existing one, and you want to use
 
 "@
 
@@ -169,7 +182,8 @@ $services = @(
     "CS2",
     "Websupport SK",
     "Gcore",
-    "Hunt: Showdown EU"
+    "Hunt: Showdown EU",
+    "Fastly"
 )
 
 if ($selected[0]) {
