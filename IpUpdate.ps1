@@ -6,7 +6,7 @@ function Show-InteractiveMenu {
         "Websupport SK",
         "Gcore",
         "Hunt: Showdown EU",
-        "Fastly"
+	"Fastly"
     )
 
     $selected = @($false, $false, $false, $false, $false, $false, $false)
@@ -14,11 +14,10 @@ function Show-InteractiveMenu {
 
     function Display-Menu {
         Clear-Host
-        Write-Host "Use arrow keys to navigate and space to select/deselect. Press En
-ter to confirm."
+        Write-Host "Use arrow keys to navigate and space to select/deselect. Press Enter to confirm."
         for ($i = 0; $i -lt $services.Length; $i++) {
             $selectionMarker = if ($selected[$i]) { "[X]" } else { "[ ]" }
-
+    
             if ($i -eq $currentIndex) {
                 Write-Host ">> $selectionMarker $($services[$i])"
             } else {
@@ -33,16 +32,14 @@ ter to confirm."
 
         switch ($key.VirtualKeyCode) {
             38 {  # Up arrow key
-                $currentIndex = if ($currentIndex -gt 0) { $currentIndex - 1 } else {
- $services.Length - 1 }
+                $currentIndex = if ($currentIndex -gt 0) { $currentIndex - 1 } else { $services.Length - 1 }
             }
             40 {  # Down arrow key
-                $currentIndex = if ($currentIndex -lt $services.Length - 1) { $curren
-tIndex + 1 } else { 0 }
+                $currentIndex = if ($currentIndex -lt $services.Length - 1) { $currentIndex + 1 } else { 0 }
             }
             32 {  # Space key
                 if ($currentIndex -eq 0) {
-                    # Ha a "Select all" opció van kiválasztva, állítsuk be az összes
+                    # Ha a "Select all" opció van kiválasztva, állítsuk be az összes többi opciót is
                     $allSelected = -not $selected[0]
                     for ($j = 0; $j -lt $selected.Length; $j++) {
                         $selected[$j] = $allSelected
@@ -114,7 +111,7 @@ function Get-DefaultIPs {
     }
 
     $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
-
+    
     $defaultIPs = $trimmedIPs -join ", "
 
     return $defaultIPs
@@ -122,7 +119,7 @@ function Get-DefaultIPs {
 
 function Get-DNSIPs{
     param (
-        [string]$url = "https://fxtelekom.org/ips/dns.txt"
+        [string]$url = "https://staging.fxtelekom.org/ips/dns.txt"
     )
 
     try {
@@ -134,7 +131,7 @@ function Get-DNSIPs{
     }
 
     $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
-
+    
     $DNSIPs = $trimmedIPs -join ", "
 
     return $DNSIPs
@@ -142,21 +139,21 @@ function Get-DNSIPs{
 
 
 $logo = @"
-  ________   _________ ______ _      ______ _  ______  __  __
+  ________   _________ ______ _      ______ _  ______  __  __ 
  |  ____\ \ / /__   __|  ____| |    |  ____| |/ / __ \|  \/  |
  | |__   \ V /   | |  | |__  | |    | |__  | ' / |  | | \  / |
  |  __|   > <    | |  |  __| | |    |  __| |  <| |  | | |\/| |
  | |     / . \   | |  | |____| |____| |____| . \ |__| | |  | |
  |_|    /_/ \_\  |_|  |______|______|______|_|\_\____/|_|  |_|
-
-
+                                                              
+                                                              
 "@
 
 Clear-Host
 Write-Host @"
 $logo
-This script will enter the IP ranges for your selected services in your wireguard conf
-You can run it when we add a new list or update an existing one, and you want to use
+This script will enter the IP ranges for your selected services in your wireguard config file.
+You can run it when we add a new list or update an existing one, and you want to use it for a newly added service or one of the old ranges is extended!
 
 "@
 
