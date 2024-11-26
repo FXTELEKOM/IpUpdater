@@ -113,7 +113,7 @@ function Get-DefaultIPs {
         return
     }
 
-    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() }
+    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
 
     $defaultIPs = $trimmedIPs -join ", "
 
@@ -133,7 +133,7 @@ function Get-DNSIPs{
         return
     }
 
-    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() }
+    $trimmedIPs = $ipListContent.Content -split "`n" | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne "" }
 
     $DNSIPs = $trimmedIPs -join ", "
 
