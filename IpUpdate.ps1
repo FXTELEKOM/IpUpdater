@@ -155,7 +155,7 @@ $logo = @"
 Clear-Host
 Write-Host @"
 $logo
-This script will enter the IP ranges for your selected services in your wireguard con
+This script will enter the IP ranges for your selected services in your wireguard conf
 You can run it when we add a new list or update an existing one, and you want to use
 
 "@
