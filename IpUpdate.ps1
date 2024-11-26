@@ -92,7 +92,7 @@ function Get-IPListForService {
 
     try {
         $ipList = Invoke-WebRequest -Uri $url -UseBasicParsing
-        $ipAddresses = $ipList.Content -split "`n" | ForEach-Object { $_.Trim() } | W
+        $ipAddresses = $ipList.Content -split "`n" | ForEach-Object { $_.Trim() }
         return $ipAddresses
     } catch {
         Write-Error "Failed to download IP list for service $service : $_"
