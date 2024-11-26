@@ -1,9 +1,3 @@
-} catch {
-    Write-Error "Error processing the configuration file: $_"
-}
-21:16:45 - dovahkiin0424: ~/IpUpdater 
-
-21:18:09 - dovahkiin0424: ~/IpUpdater  cat IpUpdate.ps1         (U main)  in 13ms
 function Show-InteractiveMenu {
     $services = @(
         "Select all",
