@@ -6,10 +6,11 @@ function Show-InteractiveMenu {
         "Websupport SK",
         "Gcore",
         "Hunt: Showdown EU",
-	"Fastly"
+	"Fastly",
+	"Github Ucontent"
     )
 
-    $selected = @($false, $false, $false, $false, $false, $false, $false)
+    $selected = @($false, $false, $false, $false, $false, $false, $false, $false)
     $currentIndex = 0
 
     function Display-Menu {
@@ -80,6 +81,9 @@ function Get-IPListForService {
         }
         "Fastly" {
             $url = "https://fxtelekom.org/ips/fastly.txt"
+        }
+        "Github Ucontent" {
+            $url = "https://fxtelekom.org/ips/github-ucontent.txt"
         }
         default {
             Write-Error "Invalid service selection."
@@ -174,7 +178,8 @@ $services = @(
     "Websupport SK",
     "Gcore",
     "Hunt: Showdown EU",
-    "Fastly"
+    "Fastly",
+    "Github Ucontent"
 )
 
 if ($selected[0]) {
