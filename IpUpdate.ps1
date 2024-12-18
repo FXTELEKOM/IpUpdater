@@ -7,11 +7,11 @@ function Show-InteractiveMenu {
 	"Gcore",
 	"Hunt: Showdown EU",
 	"Fastly",
-	"Github Ucontent"
+	"Github Ucontent",
 	"Geforce NOW"
     )
 
-    $selected = @($false, $false, $false, $false, $false, $false, $false, $false)
+    $selected = @($false, $false, $false, $false, $false, $false, $false, $false, $false)
     $currentIndex = 0
 
     function Display-Menu {
