@@ -1,13 +1,14 @@
 function Show-InteractiveMenu {
     $services = @(
-        "Select all",
-        "Cloudflare",
-        "CS2",
-        "Websupport SK",
-        "Gcore",
-        "Hunt: Showdown EU",
+	"Select all",
+	"Cloudflare",
+	"CS2",
+	"Websupport SK",
+	"Gcore",
+	"Hunt: Showdown EU",
 	"Fastly",
 	"Github Ucontent"
+	"Geforce NOW"
     )
 
     $selected = @($false, $false, $false, $false, $false, $false, $false, $false)
@@ -84,6 +85,9 @@ function Get-IPListForService {
         }
         "Github Ucontent" {
             $url = "https://fxtelekom.org/ips/github-ucontent.txt"
+        }
+        "Geforce NOW" {
+            $url = "https://fxtelekom.org/ips/gfn.txt"
         }
         default {
             Write-Error "Invalid service selection."
@@ -179,7 +183,8 @@ $services = @(
     "Gcore",
     "Hunt: Showdown EU",
     "Fastly",
-    "Github Ucontent"
+    "Github Ucontent",
+	"Geforce NOW"
 )
 
 if ($selected[0]) {
