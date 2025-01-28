@@ -8,7 +8,7 @@ function Show-InteractiveMenu {
 	"Hunt: Showdown EU",
 	"Fastly",
 	"Geforce NOW",
-	"World of Thanks"
+	"World of Tanks"
     )
 
     $selected = @($false, $false, $false, $false, $false, $false, $false, $false, $false)
@@ -89,7 +89,7 @@ function Get-IPListForService {
         "Geforce NOW" {
             $url = "https://fxtelekom.org/ips/gfn.txt"
         }
-        "World of Thanks" {
+        "World of Tanks" {
             $url = "https://fxtelekom.org/ips/wot.txt"
         }
         default {
@@ -187,7 +187,7 @@ $services = @(
     "Hunt: Showdown EU",
     "Fastly",
 	"Geforce NOW",
-	"World of Thanks"
+	"World of Tanks"
 )
 
 if ($selected[0]) {
