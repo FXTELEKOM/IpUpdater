@@ -7,8 +7,8 @@ function Show-InteractiveMenu {
 	"Gcore",
 	"Hunt: Showdown EU",
 	"Fastly",
-	"Github Ucontent",
-	"Geforce NOW"
+	"Geforce NOW",
+	"World of Thanks"
     )
 
     $selected = @($false, $false, $false, $false, $false, $false, $false, $false, $false)
@@ -88,6 +88,9 @@ function Get-IPListForService {
         }
         "Geforce NOW" {
             $url = "https://fxtelekom.org/ips/gfn.txt"
+        }
+        "World of Thanks" {
+            $url = "https://fxtelekom.org/ips/wot.txt"
         }
         default {
             Write-Error "Invalid service selection."
@@ -183,8 +186,8 @@ $services = @(
     "Gcore",
     "Hunt: Showdown EU",
     "Fastly",
-    "Github Ucontent",
-	"Geforce NOW"
+	"Geforce NOW",
+	"World of Thanks"
 )
 
 if ($selected[0]) {
